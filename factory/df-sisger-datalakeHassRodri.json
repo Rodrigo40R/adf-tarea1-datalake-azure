@@ -1,0 +1,15 @@
+{
+	"name": "df-sisger-datalakeHassRodri",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "chilecentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "e07ee3e1-7ba9-43c4-a113-24b6941e38b8",
+		"tenantId": "cc28633f-12b8-46cb-bc15-951dae239b4d"
+	}
+}
