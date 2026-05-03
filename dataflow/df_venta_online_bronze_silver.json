@@ -15,10 +15,36 @@
 					"name": "source1"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ventas_sc_limpio_csv",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
+				},
+				{
+					"name": "derivedColumn4"
+				},
+				{
+					"name": "derivedColumn5"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -52,7 +78,41 @@
 				"          metodo_pago = payment_method",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1"
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(id_venta = trim(id_venta),",
+				"          fecha = trim(fecha),",
+				"          producto = trim(producto),",
+				"          cantidad = trim(cantidad),",
+				"          precio_unitario = trim(precio_unitario),",
+				"          nombre_cliente = trim(nombre_cliente),",
+				"          cliente_email = trim(cliente_email),",
+				"          sucursal = trim(sucursal),",
+				"          metodo_pago = trim(metodo_pago)) ~> derivedColumn1",
+				"derivedColumn1 derive(sucursal = iif(in(['santa cruz', 'SCZ', 'Santa Cruz'], sucursal), 'Santa Cruz',\r",
+				"iif(in(['cochabamba', 'CBBA', 'Cochabamba'], sucursal), 'Cochabamba',\r",
+				"iif(in(['la paz', 'LP', 'La Paz', 'LPZ', 'L.P.'], sucursal), 'La Paz',\r",
+				"iif(in(['tarija', 'Tarija'], sucursal), 'Tarija',\r",
+				"iif(in(['oruro', 'Oruro'], sucursal), 'Oruro',\r",
+				"iif(in(['potosi', 'Potosí', 'Potosi'], sucursal), 'Potosí',\r",
+				"iif(in(['sucre', 'Sucre'], sucursal), 'Sucre',\r",
+				"iif(in(['trinidad', 'Trinidad'], sucursal), 'Trinidad',\r",
+				"iif(in(['cobija', 'Cobija', 'Cobija '], sucursal), 'Cobija',\r",
+				"iif(isNull(sucursal), 'Online', sucursal)))))))))),",
+				"          canal = 'Online') ~> derivedColumn2",
+				"derivedColumn2 derive(fecha = coalesce(    toDate(fecha, 'yyyy-MM-dd'),    toDate(fecha, 'dd-MM-yyyy'),    toDate(fecha, 'MMMM dd, yyyy'),     toDate(fecha, 'dd-MMM-yyyy'),       toDate(fecha, 'dd/MM/yyyy'),    toDate(fecha, 'MM/dd/yyyy'),    toDate(fecha, 'dd \\'de\\' MMMM \\'de\\' yyyy'),    toDate(fecha, 'yyyy/MM/dd'),    toDate(fecha, 'MM-dd-yyyy'))) ~> derivedColumn3",
+				"derivedColumn3 derive(cantidad = toInteger(cantidad),",
+				"          precio_unitario = toFloat(regexReplace(toString(precio_unitario),  '[^0-9.]',''))) ~> derivedColumn4",
+				"derivedColumn4 derive(producto = initCap(regexReplace(producto,'\\\\s', ' '))) ~> derivedColumn5",
+				"derivedColumn5 filter(cantidad>0 && !isNull(precio_unitario) && !isNull(fecha)) ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['ventas_online_limpio.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1"
 			]
 		}
 	}
